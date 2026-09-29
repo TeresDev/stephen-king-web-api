@@ -19,6 +19,6 @@ artifacts/
 CLAUDE.md
 AGENTS.md
 
-# Local planning material — kept on disk, never committed.
+# Local working material — kept on disk, never committed.
 # Decisions that affect behaviour live in README.md and in XML doc comments.
-docs/superpowers/
+docs/
