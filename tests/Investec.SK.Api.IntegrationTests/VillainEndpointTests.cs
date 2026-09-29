@@ -302,4 +302,37 @@ public class OpenApiTests
         Assert.Equal("Greta Bowie", derryExample.GetProperty("data")[0]
             .GetProperty("villainName").GetString());
     }
+
+    [Fact]
+    public async Task OpenApiDocument_ErrorsPropertyOnEnvelopeSchemas_DocumentsWhyItIsAlwaysEmpty()
+    {
+        using var factory = TestApiFactory.Healthy();
+        var response = await factory.CreateClient().GetAsync("/openapi/v1.json");
+        response.EnsureSuccessStatusCode();
+
+        var document = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var schemas = document.GetProperty("components").GetProperty("schemas");
+
+        // Every ApiResponse<T> schema has an "errors" property whose items reference
+        // UpstreamFailure; find them without depending on the generated schema names.
+        var errorsProperties = schemas.EnumerateObject()
+            .Where(schema => schema.Value.TryGetProperty("properties", out var properties)
+                && properties.TryGetProperty("errors", out var errors)
+                && errors.TryGetProperty("items", out var items)
+                && items.TryGetProperty("$ref", out var itemRef)
+                && itemRef.GetString()!.EndsWith("UpstreamFailure", StringComparison.Ordinal))
+            .Select(schema => schema.Value.GetProperty("properties").GetProperty("errors"))
+            .ToList();
+
+        Assert.NotEmpty(errorsProperties);
+
+        foreach (var errorsProperty in errorsProperties)
+        {
+            Assert.True(errorsProperty.TryGetProperty("description", out var description));
+            var text = description.GetString();
+            Assert.False(string.IsNullOrWhiteSpace(text));
+            Assert.Contains("ProblemDetails", text);
+            Assert.Contains("reserved", text, StringComparison.OrdinalIgnoreCase);
+        }
+    }
 }

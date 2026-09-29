@@ -8,6 +8,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi(options =>
 {
     options.AddOperationTransformer<ExamplePayloadsTransformer>();
+    options.AddSchemaTransformer<ApiResponseSchemaTransformer>();
 });
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>

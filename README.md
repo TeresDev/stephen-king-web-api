@@ -42,6 +42,19 @@ Every 200 carries `errors[]` (upstream sources that failed) and `skipped[]` (rec
 not be assembled), so nothing disappears silently. Stale data is never served: an expired cache
 plus a down upstream returns 502/503 rather than last-known-good.
 
+### The envelope's diagnostic arrays
+
+- **`skipped[]`** — records that could not be assembled into a response row even though the
+  request otherwise succeeded. Populated today. Each entry has a `reason` such as
+  `NoLinkedBooks`, `InvalidIsbn`, or `UnresolvedBookReference` — see `SkipReason` for the full
+  list.
+- **`errors[]`** — upstream source failures that did not prevent the request from succeeding.
+  Reserved, and currently always empty **by design, not by oversight**: any upstream failure in
+  the present design prevents the endpoint from serving its data at all, so it is reported as a
+  `ProblemDetails` response (see the table above) instead of a partial 200 carrying `errors[]`.
+  The field is kept for the day a partial-failure mode exists — a third upstream source,
+  per-resource fan-out, or serving stale-with-warning.
+
 ## Running
 
 ```bash
