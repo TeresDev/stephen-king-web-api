@@ -336,3 +336,16 @@ public class OpenApiTests
         }
     }
 }
+
+public class ScalarUiTests
+{
+    [Fact]
+    public async Task ScalarApiReference_ReturnsBrowsableHtmlPage()
+    {
+        using var factory = TestApiFactory.Healthy();
+        var response = await factory.CreateClient().GetAsync("/scalar/v1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+    }
+}

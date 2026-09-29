@@ -1,6 +1,7 @@
 using Investec.SK.Api.Endpoints;
 using Investec.SK.Api.OpenApi;
 using Investec.SK.Infrastructure;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,7 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 app.MapOpenApi();
+app.MapScalarApiReference(options => options.WithTitle("Stephen King Web API"));
 app.MapVillainEndpoints();
 app.MapHealthEndpoints();
 

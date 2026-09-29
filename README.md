@@ -11,6 +11,7 @@ A .NET 10 minimal API over the public Stephen King Books and Villains feeds.
 | GET | `/villains/maine/summary` | Row counts per year and the longest books |
 | GET | `/health/upstream` | Per-source upstream reachability |
 | GET | `/openapi/v1.json` | OpenAPI document |
+| GET | `/scalar/v1` | Browsable API reference UI (Scalar) |
 
 ### Query parameters
 
@@ -60,6 +61,9 @@ plus a down upstream returns 502/503 rather than last-known-good.
 ```bash
 dotnet run --project src/Investec.SK.Api
 ```
+
+Open `/scalar/v1` in a browser for a clickable API reference (generated from the OpenAPI
+document at `/openapi/v1.json`).
 
 ## Testing
 
