@@ -137,4 +137,13 @@ public class VillainMapperTests
         Assert.Equal(3, mapped.Items.Count(
             v => v.Notes.IsResidentOfDerry && v.Gender == Investec.SK.Domain.Gender.Female));
     }
+
+    [Fact]
+    public void MapAll_Null_ReturnsEmpty()
+    {
+        var mapped = VillainMapper.MapAll(null);
+
+        Assert.Empty(mapped.Items);
+        Assert.Empty(mapped.Skipped);
+    }
 }
