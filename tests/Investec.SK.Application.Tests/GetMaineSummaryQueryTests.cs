@@ -62,6 +62,56 @@ public class GetMaineSummaryQueryTests
         Assert.Equal("It", result.Response.Data.TopByPages[0].BookName);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_BookWithSeveralVillains_AppearsOnceWithAVillainCount()
+    {
+        var books = FakeBookRepository.Returning(
+            TestData.Book(1, "It", 1986, 1138),
+            TestData.Book(2, "Misery", 1987, 310));
+
+        var villains = FakeVillainRepository.Returning(
+            TestData.MaineVillain(10, "Pennywise", TestData.Link(1, "It")),
+            TestData.MaineVillain(11, "Henry Bowers", TestData.Link(1, "It")),
+            TestData.MaineVillain(12, "Patrick Hockstetter", TestData.Link(1, "It")),
+            TestData.MaineVillain(13, "Annie Wilkes", TestData.Link(2, "Misery")));
+
+        var result = await Handler(villains, books).ExecuteAsync(null, CancellationToken.None);
+
+        var topByPages = result.Response!.Data.TopByPages;
+
+        Assert.Equal(2, topByPages.Count);
+        Assert.Single(topByPages, b => b.BookName == "It");
+        var it = topByPages.Single(b => b.BookName == "It");
+        Assert.Equal(3, it.VillainCount);
+        Assert.Equal(1138, it.Pages);
+
+        // Ordering is still pages-descending across distinct books.
+        Assert.Equal(["It", "Misery"], topByPages.Select(b => b.BookName));
+
+        // The top limit counts BOOKS, not rows: 4 rows collapse to 2 distinct books.
+        Assert.Equal(4, result.Response.Data.TotalRows);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_TopParameter_LimitsBooksNotRows()
+    {
+        var books = FakeBookRepository.Returning(
+            TestData.Book(1, "It", 1986, 1138),
+            TestData.Book(2, "Misery", 1987, 310));
+
+        var villains = FakeVillainRepository.Returning(
+            TestData.MaineVillain(10, "Pennywise", TestData.Link(1, "It")),
+            TestData.MaineVillain(11, "Henry Bowers", TestData.Link(1, "It")),
+            TestData.MaineVillain(12, "Patrick Hockstetter", TestData.Link(1, "It")),
+            TestData.MaineVillain(13, "Annie Wilkes", TestData.Link(2, "Misery")));
+
+        var result = await Handler(villains, books).ExecuteAsync(1, CancellationToken.None);
+
+        Assert.Single(result.Response!.Data.TopByPages);
+        Assert.Equal("It", result.Response.Data.TopByPages[0].BookName);
+        Assert.Equal(3, result.Response.Data.TopByPages[0].VillainCount);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]

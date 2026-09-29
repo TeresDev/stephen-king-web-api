@@ -50,8 +50,16 @@ public sealed class GetMaineSummaryQuery(
             .OrderByDescending(c => c.Year)
             .ToArray();
 
-        var topByPages = MaineRowSorter
-            .Sort(rowSet.Rows, SortKey.Pages, SortDirection.Desc)
+        var topByPages = rowSet.Rows
+            .GroupBy(r => r.Isbn, StringComparer.Ordinal)
+            .Select(g => new TopBook(
+                g.First().BookName,
+                g.Key,
+                g.First().Pages,
+                g.First().Year,
+                g.Select(r => r.VillainName).Distinct(StringComparer.OrdinalIgnoreCase).Count()))
+            .OrderByDescending(b => b.Pages)
+            .ThenBy(b => b.BookName, StringComparer.OrdinalIgnoreCase)
             .Take(resolvedTop)
             .ToArray();
 
