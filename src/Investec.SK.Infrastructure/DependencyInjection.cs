@@ -1,6 +1,7 @@
 using Investec.SK.Application.Abstractions;
 using Investec.SK.Application.Derry;
 using Investec.SK.Application.Maine;
+using Investec.SK.Application.Summary;
 using Investec.SK.Infrastructure.Http;
 using Investec.SK.Infrastructure.Repositories;
 using Microsoft.Extensions.Configuration;
@@ -53,6 +54,7 @@ public static class DependencyInjection
         services.AddScoped<IVillainRepository, VillainRepository>();
         services.AddScoped<GetMaineVillainsQuery>();
         services.AddScoped<GetFemaleDerryQuery>();
+        services.AddScoped<GetMaineSummaryQuery>();
 
         return services;
     }

@@ -2,6 +2,7 @@ using Investec.SK.Api.Http;
 using Investec.SK.Application.Derry;
 using Investec.SK.Application.Maine;
 using Investec.SK.Application.Responses;
+using Investec.SK.Application.Summary;
 
 namespace Investec.SK.Api.Endpoints;
 
@@ -46,6 +47,18 @@ public static class VillainEndpoints
                 "Requires the villains source only, so it answers in full even while the books "
                 + "source is unavailable.")
             .Produces<ApiResponse<IReadOnlyList<DerryVillain>>>()
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status502BadGateway)
+            .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
+
+        group.MapGet("/maine/summary", async (
+                int? top,
+                GetMaineSummaryQuery query,
+                CancellationToken cancellationToken) =>
+                ProblemResults.From(await query.ExecuteAsync(top, cancellationToken)))
+            .WithName("GetMaineVillainsSummary")
+            .WithSummary("Row counts per publish year and the longest books among Maine residents.")
+            .Produces<ApiResponse<MaineSummary>>()
             .ProducesValidationProblem()
             .ProducesProblem(StatusCodes.Status502BadGateway)
             .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
