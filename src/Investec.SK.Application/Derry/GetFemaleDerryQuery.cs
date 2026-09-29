@@ -42,9 +42,17 @@ public sealed class GetFemaleDerryQuery(IVillainRepository villains, TimeProvide
                 v.BookRefs.Select(b => b.Title).ToArray()))
             .ToArray();
 
+        // A secondary ordinal tie-break is required: two names differing only by case are equal
+        // under OrdinalIgnoreCase, so without it their relative order is unspecified and a
+        // villain could appear twice or not at all across pages. The tie-break stays ascending
+        // even when the primary direction is descending, matching MaineRowSorter's convention.
         var ordered = request.Direction == SortDirection.Desc
-            ? matched.OrderByDescending(v => v.VillainName, StringComparer.OrdinalIgnoreCase).ToArray()
-            : matched.OrderBy(v => v.VillainName, StringComparer.OrdinalIgnoreCase).ToArray();
+            ? matched.OrderByDescending(v => v.VillainName, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(v => v.VillainName, StringComparer.Ordinal)
+                     .ToArray()
+            : matched.OrderBy(v => v.VillainName, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(v => v.VillainName, StringComparer.Ordinal)
+                     .ToArray();
 
         var pageItems = ordered.Skip(request.Skip).Take(request.PageSize).ToArray();
 

@@ -147,6 +147,29 @@ public class GetFemaleDerryQueryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_NamesDifferingOnlyByCase_SortStablyAndRepeatablyAcrossCalls()
+    {
+        // "greta" and "Greta" tie under the primary OrdinalIgnoreCase comparison. Without an
+        // ordinal tie-break their relative order is unspecified, so the same request could
+        // return a different order on a later call - a villain could then appear twice or not
+        // at all across pages.
+        var villains = FakeVillainRepository.Returning(
+            TestData.DerryVillain(1, "greta", Gender.Female),
+            TestData.DerryVillain(2, "Greta", Gender.Female));
+
+        var first = await Handler(villains)
+            .ExecuteAsync(null, null, null, null, CancellationToken.None);
+        var second = await Handler(villains)
+            .ExecuteAsync(null, null, null, null, CancellationToken.None);
+
+        var firstOrder = first.Response!.Data.Select(v => v.VillainName).ToArray();
+        var secondOrder = second.Response!.Data.Select(v => v.VillainName).ToArray();
+
+        Assert.Equal(["Greta", "greta"], firstOrder);
+        Assert.Equal(firstOrder, secondOrder);
+    }
+
+    [Fact]
     public async Task ExecuteAsync_DescendingDirection_ReversesTheOrder()
     {
         var villains = FakeVillainRepository.Returning(
