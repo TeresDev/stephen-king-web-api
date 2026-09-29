@@ -24,6 +24,32 @@ Sort keys: `/villains/maine` accepts `pages` (default, desc), `bookName`, `villa
 **Paging is measured in rows, not year groups.** Year grouping is applied to each page for
 presentation, so a year whose rows straddle a boundary appears on both pages.
 
+### Ordering: why the flat sequence is not strictly pages-descending
+
+Rows are sorted by page count descending, then grouped by publish year. **Within every group the
+order is strictly descending.** Across groups it is not, and that is intentional.
+
+A group is positioned by its longest book and carries its shorter books with it. With the live
+data, 1992 holds books of 352 and 305 pages, so the sequence runs:
+
+```
+… 352, 352, 352, 305, 319, 199 …
+                  ↑     ↑
+        1992's short book sits ahead of 1981's longer one
+```
+
+This is inherent to grouping, not a defect. No ordering can simultaneously keep every year's rows
+contiguous *and* read pages-descending from top to bottom, unless no two years interleave by page
+count — and this data interleaves.
+
+The alternatives were considered and rejected: ordering groups by year abandons page ordering
+between groups entirely, and emitting one group per contiguous run makes the flat sequence
+strictly descending but lets the same year appear more than once in a page. The current behaviour
+keeps one group per year and orders groups by their longest book.
+
+**Please do not "fix" this** — it is the chosen reading of "grouped by publishYear and ordered by
+pages (descending)": items are ordered descending within each group.
+
 ## Failure behaviour
 
 | Situation | `/villains/maine` | `/villains/female-derry` |
@@ -74,7 +100,9 @@ dotnet test Investec.SK.sln
 Tests never reach the network — they use golden fixtures captured from the live feed under
 `tests/fixtures/` plus a stubbed `HttpMessageHandler`.
 
-## Design documents
+## Design notes
 
-- Design: `docs/superpowers/specs/2026-09-29-stephen-king-webapi-design.md`
-- Plan: `docs/superpowers/plans/2026-09-29-stephen-king-webapi.md`
+The design decisions that affect how this API behaves are documented here in this README and in
+XML doc comments on the types that implement them — the ordering rule above, the diagnostic
+arrays, and the failure-behaviour table. Working planning material is kept local and is not part
+of the repository.
