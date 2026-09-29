@@ -19,4 +19,8 @@
     <ProjectReference Include="..\..\src\Investec.SK.Infrastructure\Investec.SK.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="../fixtures/*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="fixtures" />
+  </ItemGroup>
+
 </Project>
