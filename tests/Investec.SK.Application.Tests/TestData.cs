@@ -50,3 +50,9 @@ public static class TestData
         params BookLink[] books) =>
         Villain(id, name, gender, [note], books);
 }
+
+/// <summary>A frozen clock so meta.retrievedAt is assertable.</summary>
+public sealed class FakeTimeProvider(DateTimeOffset now) : TimeProvider
+{
+    public override DateTimeOffset GetUtcNow() => now;
+}
