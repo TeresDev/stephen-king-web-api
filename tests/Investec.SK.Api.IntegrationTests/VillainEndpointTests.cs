@@ -126,6 +126,16 @@ public class MaineEndpointTests
     }
 
     [Fact]
+    public async Task Maine_SkippedReason_SerialisesAsTheEnumName()
+    {
+        using var factory = TestApiFactory.Healthy();
+        var body = await GetJson(factory.CreateClient(), "/villains/maine");
+
+        var skipped = Assert.Single(body.GetProperty("skipped").EnumerateArray());
+        Assert.Equal("NoLinkedBooks", skipped.GetProperty("reason").GetString());
+    }
+
+    [Fact]
     public async Task Maine_BooksSourceDown_Returns502()
     {
         using var factory = TestApiFactory.BooksDown();
