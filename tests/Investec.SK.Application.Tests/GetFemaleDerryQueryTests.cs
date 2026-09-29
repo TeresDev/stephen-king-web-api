@@ -1,5 +1,6 @@
 using Investec.SK.Application.Derry;
 using Investec.SK.Application.Queries;
+using Investec.SK.Application.Responses;
 using Investec.SK.Domain;
 
 namespace Investec.SK.Application.Tests;
@@ -101,6 +102,23 @@ public class GetFemaleDerryQueryTests
         Assert.Empty(villain.Books);
         Assert.Empty(result.Response.Skipped);
         Assert.False(result.Response.Meta.Degraded);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_VillainSourceSkips_AppearInTheResponseEnvelopeAndMarkDegraded()
+    {
+        var villains = FakeVillainRepository.ReturningWithSkips(
+            [TestData.DerryVillain(1, "Greta Bowie", Gender.Female, "Derry residents")],
+            [new SkippedRecord("Villain", "villain 42", SkipReason.MissingVillainName, "Upstream supplied no villain name")]);
+
+        var result = await Handler(villains)
+            .ExecuteAsync(null, null, null, null, CancellationToken.None);
+
+        Assert.Equal(QueryStatus.Success, result.Status);
+        Assert.True(result.Response!.Meta.Degraded);
+        var skipped = Assert.Single(result.Response.Skipped);
+        Assert.Equal("villain 42", skipped.Identifier);
+        Assert.Equal(SkipReason.MissingVillainName, skipped.Reason);
     }
 
     [Fact]

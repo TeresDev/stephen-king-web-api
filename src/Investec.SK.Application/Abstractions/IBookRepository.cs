@@ -4,5 +4,5 @@ namespace Investec.SK.Application.Abstractions;
 
 public interface IBookRepository
 {
-    Task<UpstreamResult<IReadOnlyList<Book>>> GetAllAsync(CancellationToken cancellationToken);
+    Task<UpstreamResult<SourceData<Book>>> GetAllAsync(CancellationToken cancellationToken);
 }

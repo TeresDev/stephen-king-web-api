@@ -37,7 +37,12 @@ public sealed class GetMaineSummaryQuery(
         if (failures.Count == 2) return QueryResult<MaineSummary>.AllUnavailable(failures);
         if (failures.Count == 1) return QueryResult<MaineSummary>.Unavailable(failures);
 
-        var rowSet = MaineRowBuilder.Build(villainResult.Value!, bookResult.Value!);
+        var rowSet = MaineRowBuilder.Build(villainResult.Value!.Items, bookResult.Value!.Items);
+
+        var skipped = villainResult.Value.Skipped
+            .Concat(bookResult.Value.Skipped)
+            .Concat(rowSet.Skipped)
+            .ToArray();
 
         var countsByYear = rowSet.Rows
             .GroupBy(r => r.Year)
@@ -59,10 +64,10 @@ public sealed class GetMaineSummaryQuery(
             itemsOnPage: topByPages.Length,
             sort: "pages",
             direction: "desc",
-            degraded: rowSet.Skipped.Count > 0,
+            degraded: skipped.Length > 0,
             timeProvider.GetUtcNow());
 
         return QueryResult<MaineSummary>.Ok(
-            new ApiResponse<MaineSummary>(summary, meta, [], rowSet.Skipped));
+            new ApiResponse<MaineSummary>(summary, meta, [], skipped));
     }
 }

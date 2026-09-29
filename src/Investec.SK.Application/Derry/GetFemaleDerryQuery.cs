@@ -32,7 +32,7 @@ public sealed class GetFemaleDerryQuery(IVillainRepository villains, TimeProvide
             return QueryResult<IReadOnlyList<DerryVillain>>.Unavailable([result.Failure!]);
         }
 
-        var matched = result.Value!
+        var matched = result.Value!.Items
             .Where(v => v.Gender == Gender.Female && v.Notes.IsResidentOfDerry)
             .Select(v => new DerryVillain(
                 v.Name.Value,
@@ -55,10 +55,10 @@ public sealed class GetFemaleDerryQuery(IVillainRepository villains, TimeProvide
             pageItems.Length,
             request.SortName,
             request.DirectionName,
-            degraded: false,
+            degraded: result.Value.Skipped.Count > 0,
             timeProvider.GetUtcNow());
 
         return QueryResult<IReadOnlyList<DerryVillain>>.Ok(
-            new ApiResponse<IReadOnlyList<DerryVillain>>(pageItems, meta, [], []));
+            new ApiResponse<IReadOnlyList<DerryVillain>>(pageItems, meta, [], result.Value.Skipped));
     }
 }

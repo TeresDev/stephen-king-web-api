@@ -1,4 +1,5 @@
 using Investec.SK.Application.Abstractions;
+using Investec.SK.Application.Responses;
 using Investec.SK.Domain;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -13,8 +14,8 @@ namespace Investec.SK.Api.IntegrationTests;
 /// repositories replaced. No test reaches the network.
 /// </summary>
 public sealed class TestApiFactory(
-    UpstreamResult<IReadOnlyList<Book>> books,
-    UpstreamResult<IReadOnlyList<Villain>> villains)
+    UpstreamResult<SourceData<Book>> books,
+    UpstreamResult<SourceData<Villain>> villains)
     : WebApplicationFactory<Program>
 {
     // ConfigureTestServices — NOT IHostBuilder.ConfigureServices — because only the former is
@@ -32,20 +33,25 @@ public sealed class TestApiFactory(
     }
 
     public static TestApiFactory Healthy() => new(
-        UpstreamResult<IReadOnlyList<Book>>.Success(SampleData.Books),
-        UpstreamResult<IReadOnlyList<Villain>>.Success(SampleData.Villains));
+        UpstreamResult<SourceData<Book>>.Success(new SourceData<Book>(SampleData.Books, [])),
+        UpstreamResult<SourceData<Villain>>.Success(new SourceData<Villain>(SampleData.Villains, [])));
+
+    public static TestApiFactory HealthyWithSourceSkips(
+        IReadOnlyList<SkippedRecord> bookSkips, IReadOnlyList<SkippedRecord> villainSkips) => new(
+        UpstreamResult<SourceData<Book>>.Success(new SourceData<Book>(SampleData.Books, bookSkips)),
+        UpstreamResult<SourceData<Villain>>.Success(new SourceData<Villain>(SampleData.Villains, villainSkips)));
 
     public static TestApiFactory BooksDown() => new(
-        UpstreamResult<IReadOnlyList<Book>>.Failed(Failure(UpstreamSources.Books)),
-        UpstreamResult<IReadOnlyList<Villain>>.Success(SampleData.Villains));
+        UpstreamResult<SourceData<Book>>.Failed(Failure(UpstreamSources.Books)),
+        UpstreamResult<SourceData<Villain>>.Success(new SourceData<Villain>(SampleData.Villains, [])));
 
     public static TestApiFactory VillainsDown() => new(
-        UpstreamResult<IReadOnlyList<Book>>.Success(SampleData.Books),
-        UpstreamResult<IReadOnlyList<Villain>>.Failed(Failure(UpstreamSources.Villains)));
+        UpstreamResult<SourceData<Book>>.Success(new SourceData<Book>(SampleData.Books, [])),
+        UpstreamResult<SourceData<Villain>>.Failed(Failure(UpstreamSources.Villains)));
 
     public static TestApiFactory BothDown() => new(
-        UpstreamResult<IReadOnlyList<Book>>.Failed(Failure(UpstreamSources.Books)),
-        UpstreamResult<IReadOnlyList<Villain>>.Failed(Failure(UpstreamSources.Villains)));
+        UpstreamResult<SourceData<Book>>.Failed(Failure(UpstreamSources.Books)),
+        UpstreamResult<SourceData<Villain>>.Failed(Failure(UpstreamSources.Villains)));
 
     private static UpstreamFailure Failure(string source) => new(
         source,
@@ -54,15 +60,15 @@ public sealed class TestApiFactory(
         UpstreamFailureKind.ServerError,
         "Upstream unavailable");
 
-    private sealed class StubBookRepository(UpstreamResult<IReadOnlyList<Book>> result) : IBookRepository
+    private sealed class StubBookRepository(UpstreamResult<SourceData<Book>> result) : IBookRepository
     {
-        public Task<UpstreamResult<IReadOnlyList<Book>>> GetAllAsync(CancellationToken ct) =>
+        public Task<UpstreamResult<SourceData<Book>>> GetAllAsync(CancellationToken ct) =>
             Task.FromResult(result);
     }
 
-    private sealed class StubVillainRepository(UpstreamResult<IReadOnlyList<Villain>> result) : IVillainRepository
+    private sealed class StubVillainRepository(UpstreamResult<SourceData<Villain>> result) : IVillainRepository
     {
-        public Task<UpstreamResult<IReadOnlyList<Villain>>> GetAllAsync(CancellationToken ct) =>
+        public Task<UpstreamResult<SourceData<Villain>>> GetAllAsync(CancellationToken ct) =>
             Task.FromResult(result);
     }
 }

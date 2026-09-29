@@ -51,7 +51,12 @@ public sealed class GetMaineVillainsQuery(
             return QueryResult<IReadOnlyList<MaineYearGroup>>.Unavailable(failures);
         }
 
-        var rowSet = MaineRowBuilder.Build(villainResult.Value!, bookResult.Value!);
+        var rowSet = MaineRowBuilder.Build(villainResult.Value!.Items, bookResult.Value!.Items);
+
+        var skipped = villainResult.Value.Skipped
+            .Concat(bookResult.Value.Skipped)
+            .Concat(rowSet.Skipped)
+            .ToArray();
 
         // Declared explicitly: a `var` here fails to infer a common type between
         // IReadOnlyList<MaineRow> and MaineRow[].
@@ -70,10 +75,10 @@ public sealed class GetMaineVillainsQuery(
             pageRows.Count,
             request.SortName,
             request.DirectionName,
-            degraded: rowSet.Skipped.Count > 0,
+            degraded: skipped.Length > 0,
             timeProvider.GetUtcNow());
 
         return QueryResult<IReadOnlyList<MaineYearGroup>>.Ok(
-            new ApiResponse<IReadOnlyList<MaineYearGroup>>(groups, meta, [], rowSet.Skipped));
+            new ApiResponse<IReadOnlyList<MaineYearGroup>>(groups, meta, [], skipped));
     }
 }

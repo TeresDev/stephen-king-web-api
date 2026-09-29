@@ -19,11 +19,11 @@ public sealed class BookRepository(
 {
     private const string CacheKey = "upstream:books";
 
-    public async Task<UpstreamResult<IReadOnlyList<Book>>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<UpstreamResult<SourceData<Book>>> GetAllAsync(CancellationToken cancellationToken)
     {
-        if (cache.TryGetValue(CacheKey, out IReadOnlyList<Book>? cached) && cached is not null)
+        if (cache.TryGetValue(CacheKey, out SourceData<Book>? cached) && cached is not null)
         {
-            return UpstreamResult<IReadOnlyList<Book>>.Success(cached);
+            return UpstreamResult<SourceData<Book>>.Success(cached);
         }
 
         var response = await client.GetListAsync<BookContract>(
@@ -31,13 +31,14 @@ public sealed class BookRepository(
 
         if (!response.IsSuccess)
         {
-            return UpstreamResult<IReadOnlyList<Book>>.Failed(response.Failure!);
+            return UpstreamResult<SourceData<Book>>.Failed(response.Failure!);
         }
 
         var mapped = BookMapper.MapAll(response.Value);
+        var sourceData = new SourceData<Book>(mapped.Items, mapped.Skipped);
 
-        cache.Set(CacheKey, mapped.Items, options.Value.CacheTtl);
+        cache.Set(CacheKey, sourceData, options.Value.CacheTtl);
 
-        return UpstreamResult<IReadOnlyList<Book>>.Success(mapped.Items);
+        return UpstreamResult<SourceData<Book>>.Success(sourceData);
     }
 }

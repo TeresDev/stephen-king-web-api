@@ -1,5 +1,6 @@
 using System.Net;
 using Investec.SK.Application.Abstractions;
+using Investec.SK.Application.Responses;
 using Investec.SK.Infrastructure.Http;
 using Investec.SK.Infrastructure.Repositories;
 using Microsoft.Extensions.Caching.Memory;
@@ -36,8 +37,30 @@ public class BookRepositoryTests
         var result = await repository.GetAllAsync(CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(64, result.Value!.Count);
-        Assert.Contains(result.Value, b => b.Title.Value == "Carrie");
+        Assert.Equal(64, result.Value!.Items.Count);
+        Assert.Contains(result.Value.Items, b => b.Title.Value == "Carrie");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_BookWithBlankIsbn_ReportsInvalidIsbnInsteadOfSilentlyResurfacingAsUnresolvedBookReference()
+    {
+        const string payload = """
+            { "data": [
+                { "id": 1, "Year": 1986, "Title": "It", "handle": "it",
+                  "Publisher": "Viking", "ISBN": "", "Pages": 1138,
+                  "Notes": [""], "created_at": "2021-01-01T00:00:00.000Z", "villains": [] }
+            ] }
+            """;
+
+        var (repository, _) = Build(StubHttpMessageHandler.RespondingWith(HttpStatusCode.OK, payload));
+
+        var result = await repository.GetAllAsync(CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(result.Value!.Items);
+        var skipped = Assert.Single(result.Value.Skipped);
+        Assert.Equal(SkipReason.InvalidIsbn, skipped.Reason);
+        Assert.Equal("It", skipped.Identifier);
     }
 
     [Fact]
@@ -119,8 +142,8 @@ public class VillainRepositoryTests
             .GetAllAsync(CancellationToken.None);
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(115, result.Value!.Count);
-        Assert.Equal(38, result.Value.Count(v => v.Notes.IsResidentOfMaine));
+        Assert.Equal(115, result.Value!.Items.Count);
+        Assert.Equal(38, result.Value.Items.Count(v => v.Notes.IsResidentOfMaine));
     }
 
     [Fact]

@@ -4,5 +4,5 @@ namespace Investec.SK.Application.Abstractions;
 
 public interface IVillainRepository
 {
-    Task<UpstreamResult<IReadOnlyList<Villain>>> GetAllAsync(CancellationToken cancellationToken);
+    Task<UpstreamResult<SourceData<Villain>>> GetAllAsync(CancellationToken cancellationToken);
 }

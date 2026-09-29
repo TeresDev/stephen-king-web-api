@@ -15,11 +15,11 @@ public sealed class VillainRepository(
 {
     private const string CacheKey = "upstream:villains";
 
-    public async Task<UpstreamResult<IReadOnlyList<Villain>>> GetAllAsync(CancellationToken cancellationToken)
+    public async Task<UpstreamResult<SourceData<Villain>>> GetAllAsync(CancellationToken cancellationToken)
     {
-        if (cache.TryGetValue(CacheKey, out IReadOnlyList<Villain>? cached) && cached is not null)
+        if (cache.TryGetValue(CacheKey, out SourceData<Villain>? cached) && cached is not null)
         {
-            return UpstreamResult<IReadOnlyList<Villain>>.Success(cached);
+            return UpstreamResult<SourceData<Villain>>.Success(cached);
         }
 
         var response = await client.GetListAsync<VillainContract>(
@@ -27,13 +27,14 @@ public sealed class VillainRepository(
 
         if (!response.IsSuccess)
         {
-            return UpstreamResult<IReadOnlyList<Villain>>.Failed(response.Failure!);
+            return UpstreamResult<SourceData<Villain>>.Failed(response.Failure!);
         }
 
         var mapped = VillainMapper.MapAll(response.Value);
+        var sourceData = new SourceData<Villain>(mapped.Items, mapped.Skipped);
 
-        cache.Set(CacheKey, mapped.Items, options.Value.CacheTtl);
+        cache.Set(CacheKey, sourceData, options.Value.CacheTtl);
 
-        return UpstreamResult<IReadOnlyList<Villain>>.Success(mapped.Items);
+        return UpstreamResult<SourceData<Villain>>.Success(sourceData);
     }
 }

@@ -184,6 +184,25 @@ public class GetMaineVillainsQueryTests
     }
 
     [Fact]
+    public async Task ExecuteAsync_RepositorySourcedSkips_AppearInTheResponseEnvelope()
+    {
+        var books = FakeBookRepository.ReturningWithSkips(
+            [TestData.Book(1, "It", 1986, 1138)],
+            [new SkippedRecord("Book", "Christine", SkipReason.InvalidIsbn, "Upstream supplied no ISBN")]);
+        var villains = FakeVillainRepository.ReturningWithSkips(
+            [TestData.MaineVillain(10, "Pennywise", TestData.Link(1, "It"))],
+            [new SkippedRecord("Villain", "villain 99", SkipReason.InvalidIdentifier, "Upstream supplied no usable villain id")]);
+
+        var result = await Handler(villains, books)
+            .ExecuteAsync(null, null, null, null, null, CancellationToken.None);
+
+        Assert.Equal(QueryStatus.Success, result.Status);
+        Assert.True(result.Response!.Meta.Degraded);
+        Assert.Contains(result.Response.Skipped, s => s.Reason == SkipReason.InvalidIsbn && s.Identifier == "Christine");
+        Assert.Contains(result.Response.Skipped, s => s.Reason == SkipReason.InvalidIdentifier && s.Identifier == "villain 99");
+    }
+
+    [Fact]
     public async Task ExecuteAsync_PageBeyondLast_SucceedsWithEmptyDataAndHonestMeta()
     {
         var (villains, books) = ThreeMaineRows();
