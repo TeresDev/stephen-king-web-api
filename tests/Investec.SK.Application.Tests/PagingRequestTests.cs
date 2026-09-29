@@ -148,6 +148,20 @@ public class PagingRequestTests
     }
 
     [Fact]
+    public void Skip_HugePageOverflowsTheProduct_ClampsToIntMaxValueInsteadOfWrappingNegative()
+    {
+        // page = 30,000,000 with pageSize = 100 overflows (page-1)*pageSize as a 32-bit int and
+        // wraps negative. Enumerable.Skip treats a negative count as zero, so an unclamped Skip
+        // would silently return page 1's rows for a page far beyond any possible result.
+        var ok = PagingRequest.TryCreate(30_000_000, 100, null, null, null, MaineKeys,
+                                         out var request, out var errors);
+
+        Assert.True(ok);
+        Assert.Empty(errors);
+        Assert.Equal(int.MaxValue, request.Skip);
+    }
+
+    [Fact]
     public void SortName_AndDirectionName_MatchTheWireVocabulary()
     {
         PagingRequest.TryCreate(null, null, "villainName", "desc", null, MaineKeys, out var request, out _);

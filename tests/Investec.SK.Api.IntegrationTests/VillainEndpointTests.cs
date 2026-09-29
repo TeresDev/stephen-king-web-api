@@ -105,6 +105,19 @@ public class MaineEndpointTests
         Assert.Equal(3, body.GetProperty("meta").GetProperty("totalItems").GetInt32());
     }
 
+    [Fact]
+    public async Task Maine_HugePageOverflowsTheSkipCalculation_Returns200WithEmptyDataNotPageOne()
+    {
+        using var factory = TestApiFactory.Healthy();
+        var response = await factory.CreateClient().GetAsync("/villains/maine?page=30000000&pageSize=100");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Empty(body.GetProperty("data").EnumerateArray());
+        Assert.Equal(30000000, body.GetProperty("meta").GetProperty("page").GetInt32());
+        Assert.Equal(3, body.GetProperty("meta").GetProperty("totalItems").GetInt32());
+    }
+
     [Theory]
     [InlineData("/villains/maine?page=0")]
     [InlineData("/villains/maine?page=-1")]

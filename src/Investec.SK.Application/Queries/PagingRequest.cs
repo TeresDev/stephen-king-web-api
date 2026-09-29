@@ -21,7 +21,22 @@ public sealed record PagingRequest(
 
     public string DirectionName => Direction == SortDirection.Desc ? "desc" : "asc";
 
-    public int Skip => (Page - 1) * PageSize;
+    /// <summary>
+    /// Rows to skip before this page starts. Computed in <see cref="long"/> and clamped: an
+    /// enormous <c>page</c> multiplied by <c>pageSize</c> would overflow a 32-bit product and
+    /// wrap negative, which <see cref="Enumerable.Skip{T}"/> treats as zero — silently returning
+    /// page 1's rows instead of the empty page the caller actually asked for. Once the true skip
+    /// exceeds <see cref="int.MaxValue"/> the page is beyond any possible result set, so clamping
+    /// to <see cref="int.MaxValue"/> skips everything.
+    /// </summary>
+    public int Skip
+    {
+        get
+        {
+            var skip = (long)(Page - 1) * PageSize;
+            return skip > int.MaxValue ? int.MaxValue : (int)skip;
+        }
+    }
 
     public static bool TryCreate(
         int? page,

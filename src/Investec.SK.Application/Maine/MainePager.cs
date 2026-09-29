@@ -11,7 +11,15 @@ public static class MainePager
         IReadOnlyList<MaineRow> sortedRows,
         int page,
         int pageSize)
-        => sortedRows.Skip((page - 1) * pageSize).Take(pageSize).ToArray();
+    {
+        // Computed in long and clamped for the same reason as PagingRequest.Skip: (page-1)*pageSize
+        // can overflow a 32-bit int and wrap negative, and Enumerable.Skip treats a negative count
+        // as zero, silently handing back page 1's rows for an out-of-range page.
+        var skipLong = (long)(page - 1) * pageSize;
+        var skip = skipLong > int.MaxValue ? int.MaxValue : (int)skipLong;
+
+        return sortedRows.Skip(skip).Take(pageSize).ToArray();
+    }
 
     /// <summary>
     /// Groups a page's rows by year, emitting groups in the order their first row appears so the

@@ -48,6 +48,16 @@ public class MainePagerTakePageTests
     [Fact]
     public void TakePage_EmptyInput_ReturnsEmpty() =>
         Assert.Empty(MainePager.TakePage([], page: 1, pageSize: 20));
+
+    [Fact]
+    public void TakePage_HugePageOverflowsTheSkipCalculation_ReturnsEmptyRatherThanPageOne()
+    {
+        // (page - 1) * pageSize overflows a 32-bit int here and wraps negative; Enumerable.Skip
+        // treats a negative count as zero, which would silently return page 1's rows.
+        var page = MainePager.TakePage(Rows(36), page: int.MaxValue, pageSize: 100);
+
+        Assert.Empty(page);
+    }
 }
 
 public class MainePagerGroupByYearTests
