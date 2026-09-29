@@ -1,0 +1,7 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\Investec.SK.Application\Investec.SK.Application.csproj" />
+  </ItemGroup>
+
+</Project>
