@@ -14,6 +14,7 @@ app.UseStatusCodePages();
 
 app.MapOpenApi();
 app.MapVillainEndpoints();
+app.MapHealthEndpoints();
 
 app.Run();
 
