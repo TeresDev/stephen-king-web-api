@@ -234,6 +234,19 @@ public class FemaleDerryEndpointTests
     }
 
     [Fact]
+    public async Task FemaleDerry_BothSourcesDown_Returns502()
+    {
+        // Pins the corrected contract (spec §7.1): this endpoint depends on the villains source
+        // only, so "books also down" is unobservable to it. A villains-source failure is always
+        // reported as a single-source 502, never the 503 that applies when a query genuinely
+        // depends on both sources.
+        using var factory = TestApiFactory.BothDown();
+        var response = await factory.CreateClient().GetAsync("/villains/female-derry");
+
+        Assert.Equal(HttpStatusCode.BadGateway, response.StatusCode);
+    }
+
+    [Fact]
     public async Task FemaleDerry_BookNameSortKey_Returns400()
     {
         using var factory = TestApiFactory.Healthy();

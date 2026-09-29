@@ -30,9 +30,13 @@ presentation, so a year whose rows straddle a boundary appears on both pages.
 | Both sources healthy | 200 | 200 |
 | Books down | 502 | **200, full result** |
 | Villains down | 502 | 502 |
-| Both down | 503 + `Retry-After` | 503 + `Retry-After` |
+| Both down | 503 + `Retry-After` | 502 |
 | Invalid query | 400 | 400 |
 | Page beyond last | 200, empty `data` | 200, empty `data` |
+
+`/villains/female-derry` depends only on the villains source (see above) and never calls the
+books repository, so it cannot distinguish "villains down" from "everything down" without
+destroying that independence — a villains-source failure is always a single-source 502 here.
 
 Every 200 carries `errors[]` (upstream sources that failed) and `skipped[]` (records that could
 not be assembled), so nothing disappears silently. Stale data is never served: an expired cache
