@@ -272,4 +272,34 @@ public class OpenApiTests
         Assert.True(paths.TryGetProperty("/villains/maine", out _));
         Assert.True(paths.TryGetProperty("/villains/female-derry", out _));
     }
+
+    [Fact]
+    public async Task OpenApiDocument_ContainsExamplePayloadsForBothMainEndpoints()
+    {
+        using var factory = TestApiFactory.Healthy();
+        var response = await factory.CreateClient().GetAsync("/openapi/v1.json");
+        response.EnsureSuccessStatusCode();
+
+        var document = await response.Content.ReadFromJsonAsync<JsonElement>();
+
+        var maineExample = document
+            .GetProperty("paths").GetProperty("/villains/maine")
+            .GetProperty("get").GetProperty("responses").GetProperty("200")
+            .GetProperty("content").GetProperty("application/json")
+            .GetProperty("example");
+
+        Assert.Equal("It", maineExample.GetProperty("data")[0].GetProperty("items")[0]
+            .GetProperty("bookName").GetString());
+        Assert.Equal("NoLinkedBooks", Assert.Single(maineExample.GetProperty("skipped").EnumerateArray())
+            .GetProperty("reason").GetString());
+
+        var derryExample = document
+            .GetProperty("paths").GetProperty("/villains/female-derry")
+            .GetProperty("get").GetProperty("responses").GetProperty("200")
+            .GetProperty("content").GetProperty("application/json")
+            .GetProperty("example");
+
+        Assert.Equal("Greta Bowie", derryExample.GetProperty("data")[0]
+            .GetProperty("villainName").GetString());
+    }
 }

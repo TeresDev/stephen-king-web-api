@@ -1,10 +1,14 @@
 using Investec.SK.Api.Endpoints;
+using Investec.SK.Api.OpenApi;
 using Investec.SK.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProblemDetails();
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddOperationTransformer<ExamplePayloadsTransformer>();
+});
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
